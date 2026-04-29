@@ -12,6 +12,11 @@ def health() -> dict[str, str]:
     return {"status": "ok", "env": settings.app_env}
 
 
+@app.get("/ai/status")
+def ai_status() -> dict[str, str | bool]:
+    return ai_service.runtime_status()
+
+
 @app.post("/ai/chat")
 def ai_chat(payload: ChatRequest) -> ChatResponse:
     reply = ai_service.chat(user_message=payload.message, level=payload.level)
