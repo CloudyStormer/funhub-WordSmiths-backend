@@ -33,6 +33,9 @@ Basic .env options:
 - `LLM_PROVIDER=openai_compatible` or `LLM_PROVIDER=hunyuan` for compatible providers
 - `LLM_API_KEY` is required in real mode
 - `LLM_BASE_URL` is optional for OpenAI, usually required for compatible providers
+- `HUNYUAN_API_KEY` / `HUNYUAN_MODEL` / `HUNYUAN_BASE_URL` are optional provider-specific overrides when `LLM_PROVIDER=hunyuan`
+- `TOPIC_CHAT_STORE_PATH` controls where session history is persisted (default: `app/data/topic_chat_sessions.json`)
+- `TOPIC_CHAT_MAX_HISTORY_MESSAGES` controls max saved messages per session (default: `100`)
 
 Example (Hunyuan/OpenAI-compatible):
 
@@ -81,5 +84,16 @@ uvicorn app.main:app --reload --port 8000
 - Runtime status: `GET /ai/status`
 - Chat: `POST /ai/chat`
 - Daily plan: `POST /ai/daily-plan`
+- Topic agent chat (session-based): `POST /ai/topic-agent-chat`
+- Topic agent history by session: `GET /ai/topic-agent-chat/history/{session_id}?user_id=...`
+
+### Topic agent multi-turn usage
+
+1. Start a new session by calling `POST /ai/topic-agent-chat` with empty `session_id` and providing `type` + `words`.
+2. Save the returned `session_id` on the client side.
+3. Continue conversation by sending the same `session_id` (you can omit `type` and `words` in later turns).
+4. Re-open history anytime with `GET /ai/topic-agent-chat/history/{session_id}?user_id=...`.
+
+Because session data is persisted to a JSON file, conversations survive process restarts.
 
 Open docs at: `http://127.0.0.1:8000/docs`

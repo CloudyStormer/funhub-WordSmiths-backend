@@ -22,6 +22,19 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("LLM_BASE_URL", "OPENAI_BASE_URL"),
     )
+    hunyuan_api_key: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_API_KEY"))
+    hunyuan_model: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_MODEL"))
+    hunyuan_base_url: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_BASE_URL"))
+    topic_chat_store_path: str = Field(
+        default="app/data/topic_chat_sessions.json",
+        validation_alias=AliasChoices("TOPIC_CHAT_STORE_PATH"),
+    )
+    topic_chat_max_history_messages: int = Field(
+        default=100,
+        ge=20,
+        le=1000,
+        validation_alias=AliasChoices("TOPIC_CHAT_MAX_HISTORY_MESSAGES"),
+    )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

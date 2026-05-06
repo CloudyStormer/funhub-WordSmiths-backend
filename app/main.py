@@ -1,7 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.config import settings
-from app.schemas import ChatRequest, ChatResponse, DailyPlanRequest, DailyPlanResponse
+from app.schemas import (
+    ChatRequest,
+    ChatResponse,
+    DailyPlanRequest,
+    DailyPlanResponse,
+    TopicAgentChatRequest,
+    TopicAgentChatResponse,
+    TopicAgentSessionHistoryResponse,
+)
 from app.services.ai_service import ai_service
 
 app = FastAPI(title=settings.app_name)
@@ -31,3 +39,59 @@ def ai_daily_plan(payload: DailyPlanRequest) -> DailyPlanResponse:
         goals=payload.goals,
     )
     return DailyPlanResponse(plan_title="Your daily English plan", tasks=tasks)
+
+
+@app.post(
+    "/ai/topic-agent-chat",
+    responses={
+        400: {"description": "Invalid request for creating or continuing session"},
+        403: {"description": "Session does not belong to this user"},
+    },
+)
+def ai_topic_agent_chat(payload: TopicAgentChatRequest) -> TopicAgentChatResponse:
+    try:
+        session_id, active_type, parsed_words, history, reply = ai_service.topic_agent_chat(
+            user_id=payload.user_id,
+            session_id=payload.session_id,
+            words_text=payload.words,
+            chat_type=payload.type,
+            user_message=payload.message,
+            level=payload.level,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    return TopicAgentChatResponse(
+        session_id=session_id,
+        type=active_type,
+        parsed_words=parsed_words,
+        history=history,
+        reply=reply,
+    )
+
+
+@app.get(
+    "/ai/topic-agent-chat/history/{session_id}",
+    responses={
+        403: {"description": "Session does not belong to this user"},
+        404: {"description": "Session not found"},
+    },
+)
+def ai_topic_agent_chat_history(session_id: str, user_id: str) -> TopicAgentSessionHistoryResponse:
+    try:
+        session = ai_service.topic_agent_history(user_id=user_id, session_id=session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="session not found") from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    return TopicAgentSessionHistoryResponse(
+        session_id=session["session_id"],
+        user_id=session["user_id"],
+        type=session["type"],
+        level=session["level"],
+        parsed_words=session["words"],
+        history=session["messages"],
+    )

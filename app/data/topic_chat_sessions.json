@@ -1,0 +1,33 @@
+{
+  "sessions": {
+    "0ad37689818e4471a1a3c0109237a4cf": {
+      "user_id": "u1",
+      "type": "travel",
+      "level": "A2",
+      "words": [
+        "apple",
+        "banana",
+        "travel"
+      ],
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "[mock] We will practice English about travel. Please try to use these words: apple, banana, travel. For level A2, here is my first question: what comes to your mind when you think about travel?",
+          "created_at": "2026-05-06T10:10:50.802006+00:00"
+        },
+        {
+          "role": "user",
+          "content": "I want to go to Japan next year.",
+          "created_at": "2026-05-06T10:10:50.806891+00:00"
+        },
+        {
+          "role": "assistant",
+          "content": "[mock] Let's keep talking about travel. Try to use these words naturally: apple, banana, travel. You said: I want to go to Japan next year.. My question for level A2: what is your opinion about travel?",
+          "created_at": "2026-05-06T10:10:50.807050+00:00"
+        }
+      ],
+      "created_at": "2026-05-06T10:10:50.800466+00:00",
+      "updated_at": "2026-05-06T10:10:50.807058+00:00"
+    }
+  }
+}
