@@ -110,3 +110,13 @@ class TopicChatStore:
                 "words": list(session.get("words", [])),
                 "messages": list(session.get("messages", [])),
             }
+
+    def get_user_recent_sessions(self, user_id: str, limit: int = 5) -> list[dict]:
+        with self._lock:
+            user_sessions = [
+                {"session_id": sid, **s}
+                for sid, s in self._sessions.items()
+                if s.get("user_id") == user_id
+            ]
+            user_sessions.sort(key=lambda s: s.get("updated_at", ""), reverse=True)
+            return user_sessions[:limit]

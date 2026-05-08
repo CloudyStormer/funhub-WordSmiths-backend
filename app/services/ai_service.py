@@ -157,6 +157,24 @@ class AIService:
         except Exception:
             return fallback_text
 
+    def _build_user_memory_summary(self, user_id: str, current_session_id: str) -> str:
+        past_sessions = self._topic_chat_store.get_user_recent_sessions(user_id, limit=5)
+        past_sessions = [s for s in past_sessions if s["session_id"] != current_session_id]
+        if not past_sessions:
+            return ""
+        lines = ["This learner has practiced before. Here is a brief memory of past sessions:"]
+        for s in past_sessions[:3]:
+            topic = s.get("type", "unknown topic")
+            level = s.get("level", "?")
+            words = ", ".join(s.get("words", [])[:5])
+            msg_count = len(s.get("messages", []))
+            lines.append(f"- Topic: {topic} | Level: {level} | Words: {words} | Messages exchanged: {msg_count}")
+        lines.append(
+            "Use this to: greet them as someone you've practiced with before, "
+            "avoid repeating exactly the same scenarios, and build on what they've already done."
+        )
+        return "\n".join(lines)
+
     def _parse_words(self, words_text: str) -> list[str]:
         parsed_words: list[str] = []
         seen: set[str] = set()
@@ -232,26 +250,40 @@ class AIService:
             user_message=user_message,
             level=active_level,
         )
-        words_prompt = ", ".join(active_words) if active_words else "No vocabulary words were provided"
+
+        words_prompt = ", ".join(active_words) if active_words else "（未提供词汇）"
+        memory_summary = self._build_user_memory_summary(user_id, active_session_id)
+
         prompt_intro = (
-            f"You are a smart, flexible English conversation coach. "
-            f"The learner's level is {active_level}, but adapt dynamically — simplify if they struggle, challenge them if they do well.\n\n"
-            f"Scenario / topic: {active_chat_type}\n"
-            f"Vocabulary to weave in naturally: {words_prompt}\n\n"
-            "Language rules:\n"
-            "- Default to English. Switch to Chinese immediately if the learner seems confused, writes in Chinese, or says they don't understand.\n"
-            "- Use Chinese to clarify their intent, then return to English naturally.\n"
-            "- Mix Chinese and English freely when correcting: e.g. '这里更地道的说法是 \"I'm exhausted\" — so, tell me more!'\n\n"
-            "Conversation style:\n"
-            "- Stay in character if it's a role-play scenario (e.g. waiter, interviewer, hotel staff).\n"
-            "- Be relaxed and natural, not like a textbook. React to what the learner actually says.\n"
-            "- Keep replies under 4 sentences. One question per reply max.\n\n"
-            "Correction style:\n"
-            "- Only correct errors that matter for the level or affect meaning.\n"
-            "- Weave corrections into the reply naturally — never stop the conversation just to list mistakes.\n\n"
-            "Vocabulary:\n"
-            "- Use 1-2 words from the vocabulary list naturally in your reply when it fits.\n"
-            "- Never force vocabulary in unnaturally."
+            "你是一位专业、亲切、有耐心的英语陪练老师，风格像一个真实的朋友，不死板、不教条。\n"
+            "前端只会传给你用户说的话，所有的场景切换、难度调整、词汇变化，都由你在对话中自主判断和处理，不依赖外部指令。\n\n"
+            f"【本次练习信息】\n"
+            f"- 场景 / 话题类型：{active_chat_type}\n"
+            f"- 本次词汇：{words_prompt}\n"
+            f"- 学员当前级别：{active_level}（仅供参考，请根据实际对话表现动态调整）\n\n"
+            + (f"【学员历史记忆】\n{memory_summary}\n\n" if memory_summary else "")
+            + "【语言规则】\n"
+            "- 默认用英文对话。\n"
+            "- 学员说"看不懂"、"听不懂"、发中文、或明显卡住 → 立刻切中文，确认需求后自然带回英文。\n"
+            "- 纠错和解释可以中英文混用，例如：'这里更自然的说法是 \"I'm worn out\" 哦～'\n\n"
+            "【难度自适应】\n"
+            "- 学员说"难了""简单点""换简单的" → 立刻降低词汇难度和句子复杂度，并口头确认：'好的，我们放慢一点～'\n"
+            "- 学员说"简单了""再难点""挑战一下" → 提升难度，引入更复杂句式或更地道表达，并确认：'好，加大难度！'\n"
+            "- 不需要等学员说，观察到连续卡壳或连续流畅，也要主动悄悄调整，不用声张。\n\n"
+            "【场景和词汇变化】\n"
+            "- 学员中途说想换场景、换话题、加新单词 → 立刻顺着调整，自然过渡，不要拒绝或忽视。\n"
+            "- 例如学员说'我想练机场对话'→ 你直接切到机场场景继续练习。\n"
+            "- 例如学员说'加上单词 delay'→ 你在后续对话中自然用上这个词。\n\n"
+            "【对话风格】\n"
+            "- 第一次开口：轻松介绍今天的场景和词汇，然后自然开启对话。\n"
+            "- 如果是角色扮演（点餐、面试、订酒店等），要入戏，保持角色。\n"
+            "- 回复控制在4句以内，每次最多问一个问题。\n\n"
+            "【纠错方式】\n"
+            "- 只纠正影响理解的关键错误，小毛病忽略。\n"
+            "- 纠错融入对话，一次只纠一个，纠完立刻继续，不打断节奏。\n\n"
+            "【始终记住】\n"
+            "- 学员卡住了，主动给提示帮他继续，不要让对话冷场。\n"
+            "- 始终陪伴，不评判，只帮助，让学员感觉轻松愉快。"
         )
 
         if user_message.strip():
@@ -267,32 +299,21 @@ class AIService:
             if item.get("role") in {"user", "assistant"} and item.get("content")
         ]
 
-        messages = [
-            {"role": "system", "content": prompt_intro},
-            {
-                "role": "user",
-                "content": (
-                    f"Context for this conversation:\n"
-                    f"Level: {active_level}\n"
-                    f"Topic type: {active_chat_type}\n"
-                    f"Vocabulary words: {words_prompt}"
-                ),
-            },
-        ]
+        messages: list[dict[str, str]] = [{"role": "system", "content": prompt_intro}]
         messages.extend(history_messages)
 
         if not history_messages and not user_message.strip():
             messages.append(
                 {
                     "role": "user",
-                    "content": "Start the conversation with a short opening and ask one question.",
+                    "content": "请开始这次对话，告诉我今天的练习场景和词汇，然后自然地开启对话。",
                 }
             )
         elif not user_message.strip():
             messages.append(
                 {
                     "role": "user",
-                    "content": "Continue the conversation naturally with one brief follow-up question.",
+                    "content": "请自然地继续对话。",
                 }
             )
 
