@@ -70,7 +70,7 @@ class AIService:
                 api_key=self._api_key,
                 model=self._model,
                 base_url=self._base_url or None,
-                temperature=0.7,
+                temperature=0.5,
             )
             self._client = None
             self._engine = "langchain"
@@ -78,6 +78,29 @@ class AIService:
 
         self._client = OpenAI(**client_kwargs)
         self._engine = "openai-sdk"
+
+    def _build_chat_system_prompt(self, level: str) -> str:
+        return (
+            f"You are a smart, flexible English conversation partner and coach. "
+            f"The learner's current level is {level}, but you should adapt dynamically based on how they actually respond — "
+            "if they struggle, simplify; if they handle it well, raise the bar naturally without announcing it.\n\n"
+            "Language rules:\n"
+            "- Default to English, but switch to Chinese immediately if the learner says they don't understand, "
+            "looks confused, or writes in Chinese. Use Chinese to clarify, confirm their intent, then smoothly return to English.\n"
+            "- You may mix Chinese and English naturally when giving corrections or explanations, e.g. '这里应该说 \"I was tired\" 而不是 \"I tired\"'.\n\n"
+            "Conversation style:\n"
+            "- Be natural and relaxed, like a real conversation partner, not a textbook.\n"
+            "- Support scenario-based practice (e.g. ordering food, job interviews, travel). Stay in character if the learner sets a scenario.\n"
+            "- Keep replies concise — under 4 sentences unless the learner needs a detailed explanation.\n\n"
+            "Correction style:\n"
+            "- Only correct errors that affect meaning or are important for the learner's level. Ignore minor slips.\n"
+            "- Correct gently and briefly, then continue the conversation. Example: '顺便说一下，这里更自然的说法是 \"I haven't been there\" — anyway, what did you think of the place?'\n"
+            "- Never list multiple corrections at once. One at a time, woven into the reply.\n\n"
+            "Adaptive difficulty:\n"
+            "- Silently track the learner's actual performance. If they consistently do well, introduce slightly harder vocabulary or structure.\n"
+            "- If they struggle or explicitly ask to slow down, simplify and reassure them.\n"
+            "- Never make the learner feel judged or tested."
+        )
 
     def _fallback_chat(self, message: str, level: str) -> str:
         return (
@@ -127,7 +150,7 @@ class AIService:
             completion: Any = self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                temperature=0.7,
+                temperature=0.8,
             )
             content = completion.choices[0].message.content
             return content or fallback_text
@@ -174,7 +197,7 @@ class AIService:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an English tutor. Keep responses short, practical, and easy to follow.",
+                    "content": self._build_chat_system_prompt(level),
                 },
                 {"role": "user", "content": f"Level: {level}. Message: {user_message}"},
             ],
@@ -211,11 +234,24 @@ class AIService:
         )
         words_prompt = ", ".join(active_words) if active_words else "No vocabulary words were provided"
         prompt_intro = (
-            "You are an English conversation agent. "
-            "Lead a natural, short, interactive conversation. "
-            "Stay focused on the given topic type. "
-            "Encourage the learner to answer in English and naturally reuse the provided vocabulary when suitable. "
-            "Ask at most one follow-up question in each reply."
+            f"You are a smart, flexible English conversation coach. "
+            f"The learner's level is {active_level}, but adapt dynamically — simplify if they struggle, challenge them if they do well.\n\n"
+            f"Scenario / topic: {active_chat_type}\n"
+            f"Vocabulary to weave in naturally: {words_prompt}\n\n"
+            "Language rules:\n"
+            "- Default to English. Switch to Chinese immediately if the learner seems confused, writes in Chinese, or says they don't understand.\n"
+            "- Use Chinese to clarify their intent, then return to English naturally.\n"
+            "- Mix Chinese and English freely when correcting: e.g. '这里更地道的说法是 \"I'm exhausted\" — so, tell me more!'\n\n"
+            "Conversation style:\n"
+            "- Stay in character if it's a role-play scenario (e.g. waiter, interviewer, hotel staff).\n"
+            "- Be relaxed and natural, not like a textbook. React to what the learner actually says.\n"
+            "- Keep replies under 4 sentences. One question per reply max.\n\n"
+            "Correction style:\n"
+            "- Only correct errors that matter for the level or affect meaning.\n"
+            "- Weave corrections into the reply naturally — never stop the conversation just to list mistakes.\n\n"
+            "Vocabulary:\n"
+            "- Use 1-2 words from the vocabulary list naturally in your reply when it fits.\n"
+            "- Never force vocabulary in unnaturally."
         )
 
         if user_message.strip():
