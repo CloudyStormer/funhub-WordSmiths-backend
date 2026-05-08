@@ -30,7 +30,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DEEPSEEK_API_KEY"),
     )
     deepseek_model: str = Field(
-        default="deepseek-chat",
+        default="deepseek-v4-flash",
         validation_alias=AliasChoices("DEEPSEEK_MODEL"),
     )
     deepseek_base_url: str = Field(

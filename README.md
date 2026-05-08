@@ -54,7 +54,7 @@ Example (DeepSeek):
 LANGCHAIN_ENABLED=false
 LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=your_deepseek_key
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 ```
 
