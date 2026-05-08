@@ -25,6 +25,18 @@ class Settings(BaseSettings):
     hunyuan_api_key: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_API_KEY"))
     hunyuan_model: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_MODEL"))
     hunyuan_base_url: str = Field(default="", validation_alias=AliasChoices("HUNYUAN_BASE_URL"))
+    deepseek_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("DEEPSEEK_API_KEY"),
+    )
+    deepseek_model: str = Field(
+        default="deepseek-chat",
+        validation_alias=AliasChoices("DEEPSEEK_MODEL"),
+    )
+    deepseek_base_url: str = Field(
+        default="https://api.deepseek.com",
+        validation_alias=AliasChoices("DEEPSEEK_BASE_URL"),
+    )
     topic_chat_store_path: str = Field(
         default="app/data/topic_chat_sessions.json",
         validation_alias=AliasChoices("TOPIC_CHAT_STORE_PATH"),

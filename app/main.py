@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import FastAPI, HTTPException
 
 from app.config import settings
@@ -21,7 +23,7 @@ def health() -> dict[str, str]:
 
 
 @app.get("/ai/status")
-def ai_status() -> dict[str, str | bool]:
+def ai_status() -> dict[str, Any]:
     return ai_service.runtime_status()
 
 

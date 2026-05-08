@@ -30,42 +30,54 @@ class AIService:
             max_history_messages=settings.topic_chat_max_history_messages,
         )
 
-        if provider == "hunyuan":
-            self._model = settings.hunyuan_model or settings.llm_model
-            self._base_url = settings.hunyuan_base_url or settings.llm_base_url
-            self._api_key = settings.hunyuan_api_key or settings.llm_api_key
+        self._apply_provider_overrides(provider)
 
         if provider == "mock" or not self._api_key:
             self._client = None
             return
 
-        if provider in {"openai", "openai_compatible", "hunyuan"}:
-            client_kwargs: dict[str, str] = {"api_key": self._api_key}
-            if self._base_url:
-                client_kwargs["base_url"] = self._base_url
-
-            if settings.langchain_enabled:
-                if ChatOpenAI is None:
-                    self._client = None
-                    self._engine = "langchain-unavailable"
-                    self._init_error = "langchain_openai is not installed"
-                    return
-
-                self._lc_client = ChatOpenAI(
-                    api_key=self._api_key,
-                    model=self._model,
-                    base_url=self._base_url or None,
-                    temperature=0.7,
-                )
-                self._client = None
-                self._engine = "langchain"
-                return
-
-            self._client = OpenAI(**client_kwargs)
-            self._engine = "openai-sdk"
+        if provider in {"openai", "openai_compatible", "hunyuan", "deepseek"}:
+            self._initialize_real_client()
             return
 
         self._client = None
+
+    def _apply_provider_overrides(self, provider: str) -> None:
+        if provider == "hunyuan":
+            self._model = settings.hunyuan_model or settings.llm_model
+            self._base_url = settings.hunyuan_base_url or settings.llm_base_url
+            self._api_key = settings.hunyuan_api_key or settings.llm_api_key
+            return
+
+        if provider == "deepseek":
+            self._model = settings.deepseek_model or settings.llm_model
+            self._base_url = settings.deepseek_base_url or settings.llm_base_url
+            self._api_key = settings.deepseek_api_key or settings.llm_api_key
+
+    def _initialize_real_client(self) -> None:
+        client_kwargs: dict[str, str] = {"api_key": self._api_key}
+        if self._base_url:
+            client_kwargs["base_url"] = self._base_url
+
+        if settings.langchain_enabled:
+            if ChatOpenAI is None:
+                self._client = None
+                self._engine = "langchain-unavailable"
+                self._init_error = "langchain_openai is not installed"
+                return
+
+            self._lc_client = ChatOpenAI(
+                api_key=self._api_key,
+                model=self._model,
+                base_url=self._base_url or None,
+                temperature=0.7,
+            )
+            self._client = None
+            self._engine = "langchain"
+            return
+
+        self._client = OpenAI(**client_kwargs)
+        self._engine = "openai-sdk"
 
     def _fallback_chat(self, message: str, level: str) -> str:
         return (
@@ -279,6 +291,11 @@ class AIService:
                 "hunyuan_api_key_configured": bool(settings.hunyuan_api_key),
                 "hunyuan_model": settings.hunyuan_model,
                 "hunyuan_base_url": settings.hunyuan_base_url,
+            },
+            "deepseek_overrides": {
+                "deepseek_api_key_configured": bool(settings.deepseek_api_key),
+                "deepseek_model": settings.deepseek_model,
+                "deepseek_base_url": settings.deepseek_base_url,
             },
             "topic_chat_store_path": settings.topic_chat_store_path,
         }
