@@ -2,6 +2,9 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from pydantic import BaseModel
+from app.services.tts_service import synthesize_audio
 
 from app.config import settings
 from app.schemas import (
@@ -105,3 +108,18 @@ def ai_topic_agent_chat_history(session_id: str, user_id: str) -> TopicAgentSess
         parsed_words=session["words"],
         history=session["messages"],
     )
+
+
+class TTSRequest(BaseModel):
+    text: str
+
+
+@app.post("/tts")
+async def text_to_speech(payload: TTSRequest) -> Response:
+    if not payload.text.strip():
+        raise HTTPException(status_code=400, detail="text is empty")
+    try:
+        audio_bytes = await synthesize_audio(payload.text.strip())
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
