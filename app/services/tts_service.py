@@ -40,7 +40,7 @@ def _build_auth_url() -> str:
     )
 
 
-async def synthesize_audio(text: str, voice: str = "x4_xiaoyan") -> bytes:
+async def synthesize_audio(text: str, voice: str = "x4_yezi") -> bytes:
     """将文字合成为 MP3 二进制数据"""
     if not settings.xfyun_app_id or not settings.xfyun_api_key or not settings.xfyun_api_secret:
         raise RuntimeError("讯飞 TTS 未配置，请设置 XFYUN_APP_ID / XFYUN_API_KEY / XFYUN_API_SECRET")
