@@ -47,6 +47,9 @@ class Settings(BaseSettings):
         le=1000,
         validation_alias=AliasChoices("TOPIC_CHAT_MAX_HISTORY_MESSAGES"),
     )
+    xfyun_app_id: str = Field(default="", validation_alias=AliasChoices("XFYUN_APP_ID"))
+    xfyun_api_key: str = Field(default="", validation_alias=AliasChoices("XFYUN_API_KEY"))
+    xfyun_api_secret: str = Field(default="", validation_alias=AliasChoices("XFYUN_API_SECRET"))
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

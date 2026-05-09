@@ -11,11 +11,10 @@ from urllib.parse import quote
 
 import websockets
 
-APP_ID     = "fb74bf2a"
-API_KEY    = "a1ddd25040f6bd8a802a593289054510"
-API_SECRET = "YmUwZGRlZWRhMDU3ZjFkNjI4NjFlOGFj"
-TTS_HOST   = "tts-api.xfyun.cn"
-TTS_PATH   = "/v2/tts"
+from app.config import settings
+
+TTS_HOST = "tts-api.xfyun.cn"
+TTS_PATH = "/v2/tts"
 
 
 def _build_auth_url() -> str:
@@ -23,13 +22,13 @@ def _build_auth_url() -> str:
     sign_origin = f"host: {TTS_HOST}\ndate: {date}\nGET {TTS_PATH} HTTP/1.1"
     signature = base64.b64encode(
         hmac.new(
-            key=API_SECRET.encode("utf-8"),
+            key=settings.xfyun_api_secret.encode("utf-8"),
             msg=sign_origin.encode("utf-8"),
             digestmod=hashlib.sha256,
         ).digest()
     ).decode("utf-8")
     auth_origin = (
-        f'api_key="{API_KEY}", algorithm="hmac-sha256", '
+        f'api_key="{settings.xfyun_api_key}", algorithm="hmac-sha256", '
         f'headers="host date request-line", signature="{signature}"'
     )
     authorization = base64.b64encode(auth_origin.encode("utf-8")).decode("utf-8")
@@ -43,6 +42,9 @@ def _build_auth_url() -> str:
 
 async def synthesize_audio(text: str, voice: str = "x4_xiaoyan") -> bytes:
     """将文字合成为 MP3 二进制数据"""
+    if not settings.xfyun_app_id or not settings.xfyun_api_key or not settings.xfyun_api_secret:
+        raise RuntimeError("讯飞 TTS 未配置，请设置 XFYUN_APP_ID / XFYUN_API_KEY / XFYUN_API_SECRET")
+
     url = _build_auth_url()
     text_b64 = base64.b64encode(text.encode("utf-8")).decode("utf-8")
     chunks: list[bytes] = []
@@ -51,7 +53,7 @@ async def synthesize_audio(text: str, voice: str = "x4_xiaoyan") -> bytes:
         await ws.send(
             json.dumps(
                 {
-                    "common": {"app_id": APP_ID},
+                    "common": {"app_id": settings.xfyun_app_id},
                     "business": {
                         "aue":    "lame",
                         "sfl":    1,
