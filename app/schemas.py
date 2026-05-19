@@ -59,3 +59,41 @@ class DailyPlanRequest(BaseModel):
 class DailyPlanResponse(BaseModel):
     plan_title: str
     tasks: list[str]
+
+
+class DigitalHumanChatRequest(BaseModel):
+    user_id: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1, description="ASR transcript or typed text")
+    level: str = Field(default="A2", description="English level, e.g. A1-C2")
+    avatar_id: str = Field(default="", description="Digital human avatar id")
+    voice: str = Field(default="x4_yezi", description="XFYUN voice name")
+
+
+class DigitalHumanAvatarResponse(BaseModel):
+    provider: str
+    avatar_id: str
+    status: str
+    video_url: str = ""
+    stream_url: str = ""
+    message: str = ""
+
+
+class DigitalHumanChatResponse(BaseModel):
+    job_id: str
+    user_id: str
+    user_text: str
+    reply_text: str
+    audio_url: str
+    avatar: DigitalHumanAvatarResponse
+
+
+class DigitalHumanJobResponse(DigitalHumanChatResponse):
+    provider_query: dict = Field(default_factory=dict)
+
+
+class DigitalHumanStatusResponse(BaseModel):
+    provider: str
+    provider_configured: bool
+    media_dir: str
+    public_base_url: str
+    supports: dict

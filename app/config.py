@@ -50,6 +50,40 @@ class Settings(BaseSettings):
     xfyun_app_id: str = Field(default="", validation_alias=AliasChoices("XFYUN_APP_ID"))
     xfyun_api_key: str = Field(default="", validation_alias=AliasChoices("XFYUN_API_KEY"))
     xfyun_api_secret: str = Field(default="", validation_alias=AliasChoices("XFYUN_API_SECRET"))
+    digital_human_provider: str = Field(
+        default="mock",
+        validation_alias=AliasChoices("DIGITAL_HUMAN_PROVIDER"),
+    )
+    digital_human_media_dir: str = Field(
+        default="app/data/digital_human_media",
+        validation_alias=AliasChoices("DIGITAL_HUMAN_MEDIA_DIR"),
+    )
+    digital_human_public_base_url: str = Field(
+        default="http://127.0.0.1:8000",
+        validation_alias=AliasChoices("DIGITAL_HUMAN_PUBLIC_BASE_URL"),
+    )
+    digital_human_mock_video_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("DIGITAL_HUMAN_MOCK_VIDEO_URL"),
+    )
+    tencent_secret_id: str = Field(default="", validation_alias=AliasChoices("TENCENT_SECRET_ID"))
+    tencent_secret_key: str = Field(default="", validation_alias=AliasChoices("TENCENT_SECRET_KEY"))
+    tencent_digital_human_app_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("TENCENT_DIGITAL_HUMAN_APP_ID"),
+    )
+    tencent_digital_human_project_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("TENCENT_DIGITAL_HUMAN_PROJECT_ID"),
+    )
+    tencent_digital_human_avatar_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("TENCENT_DIGITAL_HUMAN_AVATAR_ID"),
+    )
+    tencent_digital_human_endpoint: str = Field(
+        default="",
+        validation_alias=AliasChoices("TENCENT_DIGITAL_HUMAN_ENDPOINT"),
+    )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.services.tts_service import synthesize_audio
 
 from app.config import settings
+from app.routers.digital_human import router as digital_human_router
 from app.schemas import (
     ChatRequest,
     ChatResponse,
@@ -26,6 +27,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(digital_human_router)
 
 
 @app.get("/health")

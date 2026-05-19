@@ -97,6 +97,8 @@ uvicorn app.main:app --reload --port 8000
 - Daily plan: `POST /ai/daily-plan`
 - Topic agent chat (session-based): `POST /ai/topic-agent-chat`
 - Topic agent history by session: `GET /ai/topic-agent-chat/history/{session_id}?user_id=...`
+- Digital human status: `GET /digital-human/status`
+- Digital human chat MVP: `POST /digital-human/chat`
 
 ### Topic agent multi-turn usage
 
@@ -108,3 +110,30 @@ uvicorn app.main:app --reload --port 8000
 Because session data is persisted to a JSON file, conversations survive process restarts.
 
 Open docs at: `http://127.0.0.1:8000/docs`
+
+### Digital human MVP
+
+This feature is isolated under `/digital-human/*` and does not change existing AI or TTS routes.
+
+Recommended first frontend flow:
+
+1. CRA/React records while the user holds the speak button.
+2. Use browser speech recognition to produce a transcript.
+3. Call `POST /digital-human/chat` with that transcript.
+4. Play `avatar.video_url` when a real provider returns it; otherwise play `audio_url`.
+
+Example:
+
+```json
+{
+  "user_id": "local-user",
+  "message": "I want to practice ordering coffee.",
+  "level": "A2",
+  "avatar_id": "",
+  "voice": "x4_yezi"
+}
+```
+
+The user likeness must come from a digital human provider avatar id. The backend cannot infer appearance from nothing; upload clear photos or a short consented video in the provider console, then configure the resulting id with `TENCENT_DIGITAL_HUMAN_AVATAR_ID`.
+
+See `docs/digital_human_frontend_contract.md` for the React-side contract.
