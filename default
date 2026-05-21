@@ -60,7 +60,7 @@ server {
 server {
 	listen 80;
 	listen [::]:80;
-	server_name hgshouse.com www.hgshouse.com;
+	server_name hgshouse.com www.hgshouse.com api.hgshouse.com;
 
 	return 301 https://$host$request_uri;
 }
@@ -71,7 +71,7 @@ server {
 server {
 	listen 443 ssl;
 	listen [::]:443 ssl;
-	server_name hgshouse.com www.hgshouse.com;
+	server_name hgshouse.com www.hgshouse.com api.hgshouse.com;
 
 	ssl_certificate     /etc/nginx/ssl/hgshouse.com_bundle.crt;
 	ssl_certificate_key /etc/nginx/ssl/hgshouse.com.key;
