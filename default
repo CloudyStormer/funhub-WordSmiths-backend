@@ -146,8 +146,8 @@ server {
 # api.hgshouse.com.
 #
 server {
-	listen 443 ssl;
-	listen [::]:443 ssl;
+	listen 443 ssl default_server;
+	listen [::]:443 ssl default_server;
 	server_name api.hgshouse.com;
 
 	ssl_certificate     /etc/nginx/ssl/api.hgshouse.com_bundle.crt;
