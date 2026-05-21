@@ -60,7 +60,18 @@ server {
 server {
 	listen 80;
 	listen [::]:80;
-	server_name hgshouse.com www.hgshouse.com api.hgshouse.com;
+	server_name hgshouse.com www.hgshouse.com;
+
+	return 301 https://$host$request_uri;
+}
+
+
+# HTTP -> HTTPS redirect for API domain
+#
+server {
+	listen 80;
+	listen [::]:80;
+	server_name api.hgshouse.com;
 
 	return 301 https://$host$request_uri;
 }
@@ -71,7 +82,7 @@ server {
 server {
 	listen 443 ssl;
 	listen [::]:443 ssl;
-	server_name hgshouse.com www.hgshouse.com api.hgshouse.com;
+	server_name hgshouse.com www.hgshouse.com;
 
 	ssl_certificate     /etc/nginx/ssl/hgshouse.com_bundle.crt;
 	ssl_certificate_key /etc/nginx/ssl/hgshouse.com.key;
@@ -127,5 +138,49 @@ server {
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+
+
+# HTTPS API configuration. This server requires a certificate that includes
+# api.hgshouse.com.
+#
+server {
+	listen 443 ssl;
+	listen [::]:443 ssl;
+	server_name api.hgshouse.com;
+
+	ssl_certificate     /etc/nginx/ssl/api.hgshouse.com_bundle.crt;
+	ssl_certificate_key /etc/nginx/ssl/api.hgshouse.com.key;
+
+	ssl_protocols       TLSv1.2 TLSv1.3;
+	ssl_ciphers         HIGH:!aNULL:!MD5;
+
+	client_max_body_size 20m;
+
+	location = /aimebridge {
+		return 301 /aimebridge/;
+	}
+
+	location /aimebridge/ {
+		proxy_pass http://localhost:8001/;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_read_timeout 120s;
+		proxy_send_timeout 120s;
+	}
+
+	location /api/ {
+		proxy_pass http://localhost:8000/;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_read_timeout 120s;
+		proxy_send_timeout 120s;
 	}
 }
